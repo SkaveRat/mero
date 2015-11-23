@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/SkaveRat/mero/issues"
   },
-  "homepage": "https://github.com/SkaveRat/mero#readme"
+  "homepage": "https://github.com/SkaveRat/mero#readme",
+  "dependencies": {
+    "node-xmpp-core": "^4.2.0",
+    "node-xmpp-server": "^2.1.2",
+    "pem": "^1.8.1"
+  }
 }
