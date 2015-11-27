@@ -27,6 +27,7 @@
     "node-xmpp-core": "^4.2.0",
     "node-xmpp-server": "^2.1.2",
     "pem": "^1.8.1",
+    "q": "^1.4.1",
     "restify": "^4.0.3"
   }
 }

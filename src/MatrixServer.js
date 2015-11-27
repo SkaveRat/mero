@@ -1,9 +1,11 @@
 'use strict';
-var EventEmitter = require('events').EventEmitter;
-var restify = require('restify');
-var config = require('../config.json');
-var debug = require('debug')('mero:MatrixServer');
-var Matrix = require("matrix-js-sdk");
+var   EventEmitter = require('events').EventEmitter
+    , restify = require('restify')
+    , config = require('../config.json')
+    , debug = require('debug')('mero:MatrixServer')
+    , Matrix = require("matrix-js-sdk")
+    , _ = require('util')
+    ;
 
 
 class MatrixServer extends EventEmitter {
@@ -29,10 +31,12 @@ class MatrixServer extends EventEmitter {
 
     }
 
-    createRoom() {
+    createRoom(invite) {
+        let usernameParts = invite.split('@');
+
         return this.matrixClient.createRoom({
             visibility: "private",
-            invite: ["@skaverat:m.skaverat.net"]
+            invite: [_.format("@%s:%s", usernameParts[0], config.mx.host)] //@local:remote.tld
         });
     }
 
