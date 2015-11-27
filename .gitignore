@@ -1,4 +1,13 @@
 #IDE
 .idea
 
+#dependencies
 node_modules
+
+#config
+config.json
+
+#misc
+*.swp
+todo
+*.db

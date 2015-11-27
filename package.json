@@ -21,8 +21,12 @@
   },
   "homepage": "https://github.com/SkaveRat/mero#readme",
   "dependencies": {
+    "debug": "^2.2.0",
+    "matrix-js-sdk": "^0.3.0",
+    "nedb": "^1.5.0",
     "node-xmpp-core": "^4.2.0",
     "node-xmpp-server": "^2.1.2",
-    "pem": "^1.8.1"
+    "pem": "^1.8.1",
+    "restify": "^4.0.3"
   }
 }
