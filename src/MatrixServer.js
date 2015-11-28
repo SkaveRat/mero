@@ -17,31 +17,28 @@ class MatrixServer extends EventEmitter {
         server.listen(config.mx.app_port, () => {
             debug("Matrix Appserver listening on " + config.mx.app_port)
         });
-
-        this.matrixClient = Matrix.createClient({
-            baseUrl: 'https://' + config.mx.host + ':' + config.mx.port,
-            queryParams: {
-                user_id: '@mero_' + 'changeme' + ':' + config.mx.host
-            },
-            accessToken: config.mx.access_token,
-            userId: '@mero:' + config.mx.host
-        });
-
-        //this.matrixClient.startClient();
-
     }
 
-    createRoom(invite) {
+    createRoom(invitedby, invite) {
         let usernameParts = invite.split('@');
+        let matrixClient = MatrixServer._getMatrixConnection(invitedby);
 
-        return this.matrixClient.createRoom({
+        return matrixClient.createRoom({
             visibility: "private",
             invite: [_.format("@%s:%s", usernameParts[0], config.mx.host)] //@local:remote.tld
         });
     }
 
+    /**
+     * send a message from xmpp to matrix
+     * @param from sender JID
+     * @param to matrix room_id
+     * @param message
+     */
     sendMessage(from, to, message) {
-        this.matrixClient.sendTextMessage(to, message)
+        let matrixClient = MatrixServer._getMatrixConnection(from);
+
+        matrixClient.sendTextMessage(to, message)
         .then(function (foo) {
             debug(foo);
         })
@@ -63,9 +60,28 @@ class MatrixServer extends EventEmitter {
 
         });
 
-
         res.send("[]");
         next();
+    }
+
+    /**
+     * @param jid Sender JID
+     * @returns MatrixClient
+     * @private
+     */
+    static _getMatrixConnection(jid) {
+
+        let jidParts = jid.split('/');
+
+        return Matrix.createClient({
+            baseUrl: 'https://' + config.mx.host + ':' + config.mx.port,
+            queryParams: {
+                user_id: '@mero_' + jidParts[0] + ':' + config.mx.host
+            },
+            accessToken: config.mx.access_token,
+            userId: '@mero:' + config.mx.host
+        });
+
     }
 }
 

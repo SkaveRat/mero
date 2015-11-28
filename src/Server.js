@@ -43,7 +43,7 @@ class Server {
                 //we maybealready created a room for this contact combination
                 // only create new one, if not existant
                 if (data.length == 0) {
-                    this.matrixServer.createRoom(to)
+                    this.matrixServer.createRoom(from, to)
                         .then((result) => {
                             this.database.insert({
                                 xmpp_external: from,
