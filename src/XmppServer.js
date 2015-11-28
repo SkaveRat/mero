@@ -1,13 +1,14 @@
 'use strict';
 
-var  xmpp = require('node-xmpp-server')
+var xmpp = require('node-xmpp-server')
     , debug = require('debug')('mero:XmppServer')
-    , util = require('util')
+    , _ = require('util')
+    , ltx = require('node-xmpp-core').ltx
     , EventEmitter = require('events').EventEmitter
     ;
 
 
-class XmppServer extends EventEmitter{
+class XmppServer extends EventEmitter {
     constructor() {
         super();
         this.xmppServer = new xmpp.Router(5269, '::');
@@ -17,23 +18,46 @@ class XmppServer extends EventEmitter{
     handleStanza(stanza) {
         switch (stanza.getName()) {
             case 'presence':
-                let res = "<presence from='foobar@sipgoat.de' to='skaverat@skaverat.net' type='subscribed'/>";
-                let req = "<presence to='foobar@sipgoat.de' from='skaverat@skaverat.net' type='subscribe'/>";
-                this.xmppServer.send(ltx.parse(res));
-                this.xmppServer.send(ltx.parse(req));
+                debug(stanza.toString());
+
+                switch (stanza.attrs.type) {
+                    case "subscribe":
+                        this.emit('xmpp.presence.subscribe', stanza.attrs.from, stanza.attrs.to);
+                        break;
+                }
+
                 break;
 
             case 'message':
                 stanza.children.forEach((element) => {
-                    if(element.is('body')) {
+                    if (element.is('body')) {
                         this.emit('xmpp.message', stanza.attrs['from'], stanza.attrs['to'], element.getText().trim());
+                    } else {
+                        debug(element);
                     }
+
                 });
                 //debug(util.format("Received message: %s", messageBody.trim()));
                 break;
+            default:
+                debug("Unknown stanza:");
+                debug(stanza.toString());
         }
     }
 
+    /**
+     * @param from The requester
+     * @param to the matrix user
+     */
+    acceptSubscription(from, to) {
+        let res = "<presence from='%s' to='%s' type='subscribed'/>";
+        let req = "<presence to='%s' from='%s' type='subscribe'/>";
+
+        var resFormatted = _.format(res, from, to);
+        var reqFormatted = _.format(req, to, from);
+        this.xmppServer.send(ltx.parse(resFormatted));
+        //this.xmppServer.send(ltx.parse(reqFormatted));
+    }
 
 }
 

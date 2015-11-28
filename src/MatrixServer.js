@@ -13,7 +13,7 @@ class MatrixServer extends EventEmitter {
         super();
         var server = restify.createServer();
         server.use(restify.bodyParser({}));
-        server.put('/transactions/:transaction', this.handleIncoming);
+        server.put('/transactions/:transaction', this.handleIncoming.bind(this));
         server.listen(config.mx.app_port, () => {
             debug("Matrix Appserver listening on " + config.mx.app_port)
         });
@@ -51,7 +51,18 @@ class MatrixServer extends EventEmitter {
     }
 
     handleIncoming(req, res, next) {
-        debug("incoming");
+        debug(req.body);
+        debug(req.body.events);
+
+        req.body.events.forEach((event) => {
+            debug(event.content);
+            if(event.content.membership == "join"){
+                this.emit("matrix.room.join", event.room_id);
+            }
+
+
+        });
+
 
         res.send("[]");
         next();
