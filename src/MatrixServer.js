@@ -48,13 +48,23 @@ class MatrixServer extends EventEmitter {
     }
 
     handleIncoming(req, res, next) {
-        debug(req.body);
         debug(req.body.events);
 
         req.body.events.forEach((event) => {
-            debug(event.content);
-            if(event.content.membership == "join"){
-                this.emit("matrix.room.join", event.room_id);
+            switch (event.type) {
+                case 'm.room.member':
+                    if(event.content.membership == "join"){
+                        this.emit("matrix.room.join", event.room_id);
+                    }
+                    break;
+                case 'm.room.message':
+                    let from = event.user_id;
+                    let room_id = event.room_id;
+                    let message = event.content.body;
+                    this.emit("matrix.room.message", from, room_id, message);
+                    break;
+                default:
+                    debug("Unhandled event type '%s'", event.type);
             }
 
 

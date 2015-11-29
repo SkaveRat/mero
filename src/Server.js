@@ -17,9 +17,20 @@ class Server {
         this.database = new Datastore({filename: 'mero.db', autoload: true});
 
         this.matrixServer.on('matrix.room.join', this.handleMatrixRoomJoin.bind(this));
+        this.matrixServer.on('matrix.room.message', this.handleMatrixRoomMessage.bind(this));
 
         this.xmppServer.on('xmpp.message', this.handleXmppMessage.bind(this));
         this.xmppServer.on('xmpp.presence.subscribe', this.handleXmppPresenceSubscribe.bind(this));
+    }
+
+    handleMatrixRoomMessage(from, room_id, message) {
+        if(!from.startsWith('@mero_')) {
+            this._findRoomDataByRoomId(room_id)
+                .then((data) => {
+                    data = data[0];
+                    this.xmppServer.sendMessage(data.xmpp_internal, data.xmpp_external, message);
+                });
+        }
     }
 
     handleMatrixRoomJoin(room_id) {

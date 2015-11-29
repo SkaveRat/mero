@@ -45,13 +45,23 @@ class XmppServer extends EventEmitter {
         }
     }
 
+    sendMessage(from, to, message) {
+        let stanzaTemplate = "<message from='%s' to='%s' type='chat' id='%s'><body>%s</body></message>";
+
+
+        let hrTime = process.hrtime();
+        let stanza = _.format(stanzaTemplate, from, to, (hrTime[0] * 1000000 + hrTime[1]), message);
+        debug(stanza);
+        this.xmppServer.send(ltx.parse(stanza));
+    }
+
     /**
      * @param from The requester
      * @param to the matrix user
      */
     acceptSubscription(from, to) {
-        let res = "<presence from='%s' to='%s' type='subscribed' xmlns:stream='http://etherx.jabber.org/streams' xmlns:db='jabber:server:dialback'/>";
-        let req = "<presence from='%s' to='%s' type='subscribe' xmlns:stream='http://etherx.jabber.org/streams' xmlns:db='jabber:server:dialback'/>";
+        let res = "<presence from='%s' to='%s' type='subscribed'/>";
+        let req = "<presence from='%s' to='%s' type='subscribe'/>";
 
         var resFormatted = _.format(res, to, from);
         var reqFormatted = _.format(req, to, from);
