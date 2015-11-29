@@ -26,7 +26,17 @@ class MatrixServer extends EventEmitter {
         return matrixClient.createRoom({
             visibility: "private",
             invite: [_.format("@%s:%s", usernameParts[0], config.mx.host)] //@local:remote.tld
-        });
+            })
+            .then((roomdata) => {
+                matrixClient.setRoomName(roomdata.room_id, _.format("%s (XMPP)", invitedby))
+                .catch((err) => {
+                    debug(err);
+                });
+                return roomdata;
+            })
+            .catch((err) => {
+                debug(err);
+            });
     }
 
     /**
