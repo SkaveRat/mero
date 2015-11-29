@@ -11,26 +11,34 @@ var xmpp = require('node-xmpp-server')
 class XmppServer extends EventEmitter {
     constructor() {
         super();
+
+        this.stanzas = {
+            presence: "<presence from='%s' to='%s' type='%s'/>"
+        }
+
         this.xmppServer = new xmpp.Router(5269, '::');
-        this.xmppServer.register('sipgoat.de', (stanza) => this.handleStanza(stanza));
+        this.xmppServer.register("sipgoat.de", (stanza) => this.handleStanza(stanza));
     }
 
     handleStanza(stanza) {
         switch (stanza.getName()) {
-            case 'presence':
+            case "presence":
                 debug(stanza.toString());
 
                 switch (stanza.attrs.type) {
                     case "subscribe":
                         this.emit('xmpp.presence.subscribe', stanza.attrs.from, stanza.attrs.to);
                         break;
+                    case "probe":
+
+                        this.xmppServer.send(ltx.parse(_.format(this.stanzas.presence, stanza.attrs.to, stanza.attrs.from,'')));
                 }
 
                 break;
 
-            case 'message':
+            case "message":
                 stanza.children.forEach((element) => {
-                    if (element.is('body')) {
+                    if (element.is("body")) {
                         this.emit('xmpp.message', stanza.attrs['from'], stanza.attrs['to'], element.getText().trim());
                     } else {
                         debug(element);
@@ -60,11 +68,8 @@ class XmppServer extends EventEmitter {
      * @param to the matrix user
      */
     acceptSubscription(from, to) {
-        let res = "<presence from='%s' to='%s' type='subscribed'/>";
-        let req = "<presence from='%s' to='%s' type='subscribe'/>";
-
-        var resFormatted = _.format(res, to, from);
-        var reqFormatted = _.format(req, to, from);
+        var resFormatted = _.format(this.stanzas.presence, to, from, "subscribed");
+        var reqFormatted = _.format(this.stanzas.presence, to, from, "subscribe");
         this.xmppServer.send(ltx.parse(resFormatted));
         this.xmppServer.send(ltx.parse(reqFormatted));
     }
