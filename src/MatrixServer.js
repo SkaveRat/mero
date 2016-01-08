@@ -5,6 +5,8 @@ var   EventEmitter = require('events').EventEmitter
     , debug = require('debug')('mero:MatrixServer')
     , Matrix = require("matrix-js-sdk")
     , _ = require('util')
+    , Q = require('q')
+    , request = require('request')
     ;
 
 
@@ -14,29 +16,60 @@ class MatrixServer extends EventEmitter {
         var server = restify.createServer();
         server.use(restify.bodyParser({}));
         server.put('/transactions/:transaction', this.handleIncoming.bind(this));
-        server.listen(config.mx.app_port, () => {
+        server.listen(config.mx.app_port,'0.0.0.0', () => {
             debug("Matrix Appserver listening on " + config.mx.app_port)
         });
+    }
+
+    registerUser(jid) {
+        let deferred = Q.defer();
+
+        request.post({
+            url: 'https://' + config.mx.host + ':' + config.mx.port + '/_matrix/client/api/v1/register',
+            body: {
+                user: 'mero_' + jid,
+                type: 'm.login.application_service'
+            },
+            json: true,
+            qs: {
+                access_token: config.mx.access_token
+            }
+        }, function (err, res, body) {
+            if(body.access_token || body.errcode == 'M_USER_IN_USE') {
+                deferred.resolve();
+            }else{
+                deferred.reject(body.errcode);
+            }
+          });
+
+        return deferred.promise;
     }
 
     createRoom(invitedby, invite) {
         let usernameParts = invite.split('@');
         let matrixClient = MatrixServer._getMatrixConnection(invitedby);
 
-        return matrixClient.createRoom({
-            visibility: "private",
-            invite: [_.format("@%s:%s", usernameParts[0], config.mx.host)] //@local:remote.tld
+        return this.registerUser(invitedby)
+            .then(() => {
+                return matrixClient.createRoom({
+                    visibility: "private",
+                    invite: [_.format("@%s:%s", usernameParts[0], config.mx.host)] //@local:remote.tld
+                    })
+                    .then((roomdata) => {
+                        matrixClient.setRoomName(roomdata.room_id, _.format("%s (XMPP)", invitedby))
+                        .catch((err) => {
+                            debug(err);
+                        });
+                        return roomdata;
+                    })
+                    .catch((err) => {
+                        debug(err);
+                    });
             })
-            .then((roomdata) => {
-                matrixClient.setRoomName(roomdata.room_id, _.format("%s (XMPP)", invitedby))
-                .catch((err) => {
-                    debug(err);
-                });
-                return roomdata;
-            })
-            .catch((err) => {
-                debug(err);
-            });
+          .catch((err) => {
+              console.log("User create fail: " + err);
+          });
+
     }
 
     /**
@@ -57,7 +90,63 @@ class MatrixServer extends EventEmitter {
         });
     }
 
+    setUsername(user, name) {
+        let matrixClient = MatrixServer._getMatrixConnection(user);
+
+        matrixClient.setDisplayName("MyLittleDisplayname")
+          .then(() => {
+              debug("displayname success!");
+          })
+          .catch((e) => {
+              debug("displayname fail!");
+              debug(e)
+          });
+    }
+
+    setPresence(user, status) {
+        let matrixClient = MatrixServer._getMatrixConnection(user);
+
+        let presence = 'online';
+        switch (status) {
+            case 'xa':
+            case 'away':
+            case 'dnd':
+                presence = 'unavailable';
+                break;
+            case 'online':
+            case 'chat':
+                presence = 'online';
+                break;
+            case 'offline':
+                presence = 'offline';
+                break;
+        }
+
+        matrixClient.setPresence(presence)
+        .then(() => {
+            debug("presence success!");
+        })
+        .catch((e) => {
+            debug("presence fail!");
+            debug(e)
+        });
+    }
+
+    setPowerlevel(from, to, level) {
+        let matrixClient = MatrixServer._getMatrixConnection(from);
+
+        matrixClient.setPowerLevel()
+          .then(() => {
+              debug("presence success!");
+          })
+          .catch((e) => {
+              debug("presence fail!");
+              debug(e)
+          });
+    }
+
     handleIncoming(req, res, next) {
+        debug("incoming");
         debug(req.body.events);
 
         req.body.events.forEach((event) => {
@@ -90,7 +179,6 @@ class MatrixServer extends EventEmitter {
      * @private
      */
     static _getMatrixConnection(jid) {
-
         let jidParts = jid.split('/');
 
         return Matrix.createClient({
@@ -99,7 +187,7 @@ class MatrixServer extends EventEmitter {
                 user_id: '@mero_' + jidParts[0] + ':' + config.mx.host
             },
             accessToken: config.mx.access_token,
-            userId: '@mero:' + config.mx.host
+            userId: '@mero_' + jidParts[0] + ':' + config.mx.host
         });
 
     }

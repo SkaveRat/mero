@@ -16,7 +16,7 @@ class XmppServer extends EventEmitter {
             presence: "<presence from='%s' to='%s' type='%s'/>"
         }
 
-        this.xmppServer = new xmpp.Router(5269, '::');
+        this.xmppServer = new xmpp.Router(5269, '0.0.0.0');
         this.xmppServer.register("sipgoat.de", (stanza) => this.handleStanza(stanza));
     }
 
@@ -24,14 +24,23 @@ class XmppServer extends EventEmitter {
         switch (stanza.getName()) {
             case "presence":
                 debug(stanza.toString());
-
                 switch (stanza.attrs.type) {
                     case "subscribe":
                         this.emit('xmpp.presence.subscribe', stanza.attrs.from, stanza.attrs.to);
                         break;
                     case "probe":
-
                         this.xmppServer.send(ltx.parse(_.format(this.stanzas.presence, stanza.attrs.to, stanza.attrs.from,'')));
+                        break;
+                    default:
+                        const status = stanza.getChild('show');
+                        if(stanza.attrs.type == 'unavailable') {
+                          this.emit('xmpp.presence.status', stanza.attrs.from, 'offline');
+                        }else if (status) {
+                            this.emit('xmpp.presence.status', stanza.attrs.from, status.getText());
+                        }else{
+                            this.emit('xmpp.presence.status', stanza.attrs.from, 'online');
+                        }
+                        break;
                 }
 
                 break;

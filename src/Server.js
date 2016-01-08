@@ -21,6 +21,7 @@ class Server {
 
         this.xmppServer.on('xmpp.message', this.handleXmppMessage.bind(this));
         this.xmppServer.on('xmpp.presence.subscribe', this.handleXmppPresenceSubscribe.bind(this));
+        this.xmppServer.on('xmpp.presence.status', this.handleXmppPresenceStatus.bind(this));
     }
 
     handleMatrixRoomMessage(from, room_id, message) {
@@ -44,6 +45,12 @@ class Server {
                     debug("Room join event without corresponding room data!")
                 }
             });
+    }
+
+    handleXmppPresenceStatus(from, status) {
+        debug("status from %s: %s", from, status);
+        this.matrixServer.setPresence(from, status);
+        //this.matrixServer.setUsername(from, status);
     }
 
     handleXmppPresenceSubscribe(from, to) {
