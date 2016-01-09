@@ -37,21 +37,23 @@ class XmppServer extends EventEmitter {
   }
 
   handlePresenceStanza(stanza) {
+    const from = stanza.attrs.from;
+    const to = stanza.attrs.to;
     switch (stanza.attrs.type) {
       case "subscribe":
-        this.emit('xmpp.presence.subscribe', stanza.attrs.from, stanza.attrs.to);
+        this.emit('xmpp.presence.subscribe', from, to);
         break;
       case "probe":
-        this.xmppServer.send(ltx.parse(_.format(this.stanzas.presence, stanza.attrs.to, stanza.attrs.from, '')));
+        this.xmppServer.send(ltx.parse(_.format(this.stanzas.presence, to, from, '')));
         break;
       default:
         const status = stanza.getChild('show');
         if (stanza.attrs.type == 'unavailable') {
-          this.emit('xmpp.presence.status', stanza.attrs.from, 'offline');
+          this.emit('xmpp.presence.status', from, 'offline');
         } else if (status) {
-          this.emit('xmpp.presence.status', stanza.attrs.from, status.getText());
+          this.emit('xmpp.presence.status', from, status.getText());
         } else {
-          this.emit('xmpp.presence.status', stanza.attrs.from, 'online');
+          this.emit('xmpp.presence.status', from, 'online');
         }
         break;
     }
