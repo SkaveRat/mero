@@ -35,7 +35,14 @@ class MatrixServer extends EventEmitter {
                 access_token: config.mx.access_token
             }
         }, function (err, res, body) {
-            if(body.access_token || body.errcode == 'M_USER_IN_USE') {
+            if(body.access_token) {
+                matrixClient = MatrixServer._getMatrixConnection(jid);
+                matrixClient.setDisplayName(jid)
+                  .catch((err) => {
+                      debug(err);
+                  });
+                deferred.resolve();
+            }else if(body.errcode == 'M_USER_IN_USE') {
                 deferred.resolve();
             }else{
                 deferred.reject(body.errcode);
@@ -57,10 +64,6 @@ class MatrixServer extends EventEmitter {
                     })
                     .then((roomdata) => {
                         matrixClient.setRoomName(roomdata.room_id, _.format("%s (XMPP)", invitedby))
-                        .catch((err) => {
-                            debug(err);
-                        });
-                        matrixClient.setDisplayName(invitedby)
                         .catch((err) => {
                             debug(err);
                         });
