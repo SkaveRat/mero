@@ -60,6 +60,11 @@ class MatrixServer extends EventEmitter {
                         .catch((err) => {
                             debug(err);
                         });
+                        matrixClient.setDisplayName(invitedby)
+                        .catch((err) => {
+                            debug(err);
+                        });
+
                         return roomdata;
                     })
                     .catch((err) => {
@@ -90,10 +95,15 @@ class MatrixServer extends EventEmitter {
         });
     }
 
-    setUsername(user, name) {
+  /**
+   *
+   * @param user JID
+   * @param name new displayname
+   */
+    setDisplayname(user, name) {
         let matrixClient = MatrixServer._getMatrixConnection(user);
 
-        matrixClient.setDisplayName("MyLittleDisplayname")
+        matrixClient.setDisplayName(name)
           .then(() => {
               debug("displayname success!");
           })
