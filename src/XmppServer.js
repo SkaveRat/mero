@@ -24,43 +24,47 @@ class XmppServer extends EventEmitter {
   handleStanza(stanza) {
     switch (stanza.getName()) {
       case "presence":
-        debug(stanza.toString());
-        switch (stanza.attrs.type) {
-          case "subscribe":
-            this.emit('xmpp.presence.subscribe', stanza.attrs.from, stanza.attrs.to);
-            break;
-          case "probe":
-            this.xmppServer.send(ltx.parse(_.format(this.stanzas.presence, stanza.attrs.to, stanza.attrs.from, '')));
-            break;
-          default:
-            const status = stanza.getChild('show');
-            if (stanza.attrs.type == 'unavailable') {
-              this.emit('xmpp.presence.status', stanza.attrs.from, 'offline');
-            } else if (status) {
-              this.emit('xmpp.presence.status', stanza.attrs.from, status.getText());
-            } else {
-              this.emit('xmpp.presence.status', stanza.attrs.from, 'online');
-            }
-            break;
-        }
-
+        this.handlePresenceStanza(stanza);
         break;
 
       case "message":
-        stanza.children.forEach((element) => {
-          if (element.is("body")) {
-            this.emit('xmpp.message', stanza.attrs['from'], stanza.attrs['to'], element.getText().trim());
-          } else {
-            debug(element);
-          }
-
-        });
-        //debug(util.format("Received message: %s", messageBody.trim()));
+        this.handleMessageStanza(stanza);
         break;
       default:
         debug("Unknown stanza:");
         debug(stanza.toString());
     }
+  }
+
+  handlePresenceStanza(stanza) {
+    switch (stanza.attrs.type) {
+      case "subscribe":
+        this.emit('xmpp.presence.subscribe', stanza.attrs.from, stanza.attrs.to);
+        break;
+      case "probe":
+        this.xmppServer.send(ltx.parse(_.format(this.stanzas.presence, stanza.attrs.to, stanza.attrs.from, '')));
+        break;
+      default:
+        const status = stanza.getChild('show');
+        if (stanza.attrs.type == 'unavailable') {
+          this.emit('xmpp.presence.status', stanza.attrs.from, 'offline');
+        } else if (status) {
+          this.emit('xmpp.presence.status', stanza.attrs.from, status.getText());
+        } else {
+          this.emit('xmpp.presence.status', stanza.attrs.from, 'online');
+        }
+        break;
+    }
+  }
+
+  handleMessageStanza(stanza) {
+    stanza.children.forEach((element) => {
+      if (element.is("body")) {
+        this.emit('xmpp.message', stanza.attrs['from'], stanza.attrs['to'], element.getText().trim());
+      } else {
+        debug(element);
+      }
+    });
   }
 
   sendMessage(from, to, message) {
