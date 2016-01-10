@@ -74,6 +74,9 @@ class XmppServer extends EventEmitter {
         case 'paused':
           this.emit('xmpp.message.typing.paused', from, to);
           break;
+        case 'active':
+          this.emit('xmpp.message.typing.stopped', from, to);
+          break;
       }
     });
   }

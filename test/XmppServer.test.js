@@ -79,5 +79,18 @@ describe('Xmpp Server', function () {
       test.assert(eventStub.calledWithExactly('xmpp.message.typing.paused', xmppFrom, xmppTo));
       eventStub.restore();
     });
+
+    it('notifies about typing notifications stopped', function () {
+      const xmppFrom = 'foobar@example.com';
+      const xmppTo = 'barbaz@example.com';
+      var typingStanza = ltx.parse(_.format('<message from="%s" to="%s" type="chat" id="123456789"><active xmlns="http://jabber.org/protocol/chatstates"/></message>', xmppFrom, xmppTo));
+
+      var server = new XmppServer();
+
+      var eventStub = test.stub(server, 'emit');
+      server.handleStanza(typingStanza);
+      test.assert(eventStub.calledWithExactly('xmpp.message.typing.stopped', xmppFrom, xmppTo));
+      eventStub.restore();
+    });
   });
 });
