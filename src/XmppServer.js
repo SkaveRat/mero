@@ -22,6 +22,7 @@ class XmppServer extends EventEmitter {
 
 
   handleStanza(stanza) {
+    debug(stanza.toString());
     switch (stanza.getName()) {
       case "presence":
         this.handlePresenceStanza(stanza);
@@ -61,10 +62,15 @@ class XmppServer extends EventEmitter {
 
   handleMessageStanza(stanza) {
     stanza.children.forEach((element) => {
-      if (element.is("body")) {
-        this.emit('xmpp.message', stanza.attrs['from'], stanza.attrs['to'], element.getText().trim());
-      } else {
-        debug(element);
+      const from = stanza.attrs['from'];
+      const to = stanza.attrs['to'];
+      switch (element.getName()) {
+        case 'body':
+          this.emit('xmpp.message', from, to, element.getText().trim());
+          break;
+        case 'composing':
+          this.emit('xmpp.message.typing.start', from, to);
+          break;
       }
     });
   }
