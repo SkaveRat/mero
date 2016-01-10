@@ -57,39 +57,42 @@ describe('Xmpp Server', function () {
     it('notifies about typing notifications', function () {
       const xmppFrom = 'foobar@example.com';
       const xmppTo = 'barbaz@example.com';
+      const isTyping = true;
       var typingStanza = ltx.parse(_.format('<message from="%s" to="%s" type="chat" id="123456789"><composing xmlns="http://jabber.org/protocol/chatstates"/></message>', xmppFrom, xmppTo));
 
       var server = new XmppServer();
 
       var eventStub = test.stub(server, 'emit');
       server.handleStanza(typingStanza);
-      test.assert(eventStub.calledWithExactly('xmpp.message.typing.start', xmppFrom, xmppTo));
+      test.assert(eventStub.calledWithExactly('xmpp.message.typing', xmppFrom, xmppTo, isTyping));
       eventStub.restore();
     });
 
     it('notifies about typing notifications paused', function () {
       const xmppFrom = 'foobar@example.com';
       const xmppTo = 'barbaz@example.com';
+      const isTyping = false;
       var typingStanza = ltx.parse(_.format('<message from="%s" to="%s" type="chat" id="123456789"><paused xmlns="http://jabber.org/protocol/chatstates"/></message>', xmppFrom, xmppTo));
 
       var server = new XmppServer();
 
       var eventStub = test.stub(server, 'emit');
       server.handleStanza(typingStanza);
-      test.assert(eventStub.calledWithExactly('xmpp.message.typing.paused', xmppFrom, xmppTo));
+      test.assert(eventStub.calledWithExactly('xmpp.message.typing', xmppFrom, xmppTo, isTyping));
       eventStub.restore();
     });
 
     it('notifies about typing notifications stopped', function () {
       const xmppFrom = 'foobar@example.com';
       const xmppTo = 'barbaz@example.com';
+      const isTyping = false;
       var typingStanza = ltx.parse(_.format('<message from="%s" to="%s" type="chat" id="123456789"><active xmlns="http://jabber.org/protocol/chatstates"/></message>', xmppFrom, xmppTo));
 
       var server = new XmppServer();
 
       var eventStub = test.stub(server, 'emit');
       server.handleStanza(typingStanza);
-      test.assert(eventStub.calledWithExactly('xmpp.message.typing.stopped', xmppFrom, xmppTo));
+      test.assert(eventStub.calledWithExactly('xmpp.message.typing', xmppFrom, xmppTo, isTyping));
       eventStub.restore();
     });
   });

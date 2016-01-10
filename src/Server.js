@@ -20,7 +20,7 @@ class Server {
     this.matrixServer.on('matrix.room.message', this.handleMatrixRoomMessage.bind(this));
 
     this.xmppServer.on('xmpp.message', this.handleXmppMessage.bind(this));
-    this.xmppServer.on('xmpp.message.typing.start', this.handleXmppMessageTypingStart.bind(this));
+    this.xmppServer.on('xmpp.message.typing', this.handleXmppMessageTyping.bind(this));
 
 
     this.xmppServer.on('xmpp.presence.subscribe', this.handleXmppPresenceSubscribe.bind(this));
@@ -83,7 +83,7 @@ class Server {
 
   }
 
-  handleXmppMessageTypingStart(from, to) {
+  handleXmppMessageTyping(from, to, isTyping) {
     from = from.split('/')[0]; //todo use xmpp core JID class?
     to = to.split('/')[0];
 
@@ -91,7 +91,7 @@ class Server {
       .then((data) => {
         if (data.length > 0) {
           let roomData = data[0];
-          this.matrixServer.setTypingNotification(roomData.xmpp_external, roomData.matrix, true);
+          this.matrixServer.setTypingNotification(roomData.xmpp_external, roomData.matrix, isTyping);
         } else {
           debug("Incoming message for unsubscribed user"); //TODO proper xmpp response? Resending after subscription?
         }
@@ -99,7 +99,6 @@ class Server {
       .catch((err) => {
         debug(err);
       });
-
   }
 
   handleXmppMessage(from, to, message) {
