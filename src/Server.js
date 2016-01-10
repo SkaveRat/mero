@@ -20,6 +20,7 @@ class Server {
     this.matrixServer.on('matrix.room.message', this.handleMatrixRoomMessage.bind(this));
 
     this.xmppServer.on('xmpp.message', this.handleXmppMessage.bind(this));
+    this.xmppServer.on('xmpp.message.typing.start', this.handleXmppMessageTypingStart.bind(this));
 
 
     this.xmppServer.on('xmpp.presence.subscribe', this.handleXmppPresenceSubscribe.bind(this));
@@ -78,6 +79,25 @@ class Server {
           debug("Auth request duplicate");
           // TODO poke user on re-request
         }
+      });
+
+  }
+
+  handleXmppMessageTypingStart(from, to) {
+    from = from.split('/')[0]; //todo use xmpp core JID class?
+    to = to.split('/')[0];
+
+    this._findRoomData(from, to)
+      .then((data) => {
+        if (data.length > 0) {
+          let roomData = data[0];
+          this.matrixServer.setTypingNotification(roomData.xmpp_external, roomData.matrix, true);
+        } else {
+          debug("Incoming message for unsubscribed user"); //TODO proper xmpp response? Resending after subscription?
+        }
+      })
+      .catch((err) => {
+        debug(err);
       });
 
   }

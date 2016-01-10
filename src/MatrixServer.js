@@ -80,6 +80,24 @@ class MatrixServer extends EventEmitter {
 
     }
 
+  /**
+   *
+   * @param from sender JID
+   * @param to matrix room ID
+   * @param isTyping
+   */
+    setTypingNotification(from, to, isTyping) {
+        let matrixClient = MatrixServer._getMatrixConnection(from);
+
+        matrixClient.sendTyping(to, isTyping, 10000)
+          .then(function (foo) {
+              debug(foo);
+          })
+          .catch(function (foo) {
+              debug(foo);
+          });
+    }
+
     /**
      * send a message from xmpp to matrix
      * @param from sender JID
